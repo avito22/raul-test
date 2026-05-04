@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/react-demo-preview-RdgxW
+      - claude/trn-token-manager-zvSlV
       - main
   workflow_dispatch:
 

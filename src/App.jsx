@@ -1,105 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import {
-  config as apiConfig,
-  getCollateralFeed,
-  getRecentTransfers,
-  getTokenStats,
+  getReferenceProjects,
+  getRedFlagChecklist,
+  getRegulatoryPathway,
+  getRequiredStack,
+  getYieldBenchmarks,
 } from './lib/api'
-
-const NAMING_OPTIONS = [
-  {
-    id: 'CABLE',
-    ticker: 'CABLE',
-    tagline: 'Cable financiero entre TradFi y crypto',
-    pros: [
-      'Referencia histórica al "Cable" (GBP/USD) → familiar en finanzas',
-      'Corto, pronunciable, sin connotación regulatoria',
-      'No colisiona con stablecoins conocidos',
-    ],
-    cons: [
-      'Existe un token "Cable" minoritario en algunas chains (verificar Base)',
-      'Marca débil fuera del nicho FX',
-    ],
-    collisionRisk: 'medio',
-    marketing: 7,
-    legal: 8,
-  },
-  {
-    id: 'SWIFT',
-    ticker: 'SWGT',
-    tagline: 'SWIFT GLOBAL TOKEN — el rail institucional on-chain',
-    pros: [
-      'Marketing potentísimo: SWIFT = transferencias internacionales',
-      'Posiciona el producto como infraestructura, no como memecoin',
-    ],
-    cons: [
-      'SWIFT es marca registrada → riesgo legal alto (cease & desist)',
-      'Reguladores pueden interpretarlo como suplantación bancaria',
-      'Exchanges pueden rechazar el listing por riesgo de marca',
-    ],
-    collisionRisk: 'alto',
-    marketing: 10,
-    legal: 2,
-  },
-  {
-    id: 'AAA',
-    ticker: 'AAA',
-    tagline: 'Calificación máxima, colateral institucional',
-    pros: [
-      'Asocia a "rating AAA" → percepción de calidad/seguridad',
-      'Tres letras = ticker premium, fácil de listar',
-      'Sin marca registrada bloqueante',
-    ],
-    cons: [
-      'Existen varios tokens AAA en otras chains → ambigüedad de búsqueda',
-      'Reguladores pueden objetar uso del término "AAA" sin rating real',
-    ],
-    collisionRisk: 'medio-alto',
-    marketing: 9,
-    legal: 5,
-  },
-]
-
-const PROGRAMS = [
-  {
-    name: 'PPP',
-    full: 'Private Placement Program',
-    description:
-      'Colocación privada de tranches a inversores institucionales acreditados. El TRN entra como colateral, el token se emite contra ese respaldo.',
-    yield: '15–35% APY',
-  },
-  {
-    name: 'Bullet Trading',
-    full: 'Bullet Trading Desk',
-    description:
-      'Operativa intradía sobre el token con liquidez profunda. Estrategias direccionales sobre el spread del colateral subyacente.',
-    yield: '40–80% APY',
-  },
-  {
-    name: 'Market Making',
-    full: 'Market Making on Base DEX',
-    description:
-      'Provisión de liquidez en pools en Base (Aerodrome / Uniswap v4). Captura de fees + incentivos de protocolo.',
-    yield: '20–60% APY',
-  },
-]
-
-function Pill({ children, tone = 'default' }) {
-  return <span className={`pill pill-${tone}`}>{children}</span>
-}
-
-function Section({ id, eyebrow, title, children }) {
-  return (
-    <section id={id} className="section">
-      <div className="section-head">
-        {eyebrow && <span className="eyebrow">{eyebrow}</span>}
-        <h2>{title}</h2>
-      </div>
-      {children}
-    </section>
-  )
-}
 
 function useAsync(fn, deps = []) {
   const [state, setState] = useState({ loading: true, data: null, error: null })
@@ -117,35 +24,76 @@ function useAsync(fn, deps = []) {
   return state
 }
 
-export default function App() {
-  const [model, setModel] = useState('new')
-  const [selectedName, setSelectedName] = useState('CABLE')
-  const [decimals, setDecimals] = useState(24)
-  const [supplyExp, setSupplyExp] = useState(12)
+function Pill({ children, tone = 'default' }) {
+  return <span className={`pill pill-${tone}`}>{children}</span>
+}
 
-  const stats = useAsync(getTokenStats)
-  const transfers = useAsync(() => getRecentTransfers(6))
-  const collateral = useAsync(getCollateralFeed)
-
-  const selected = useMemo(
-    () => NAMING_OPTIONS.find((n) => n.id === selectedName),
-    [selectedName],
+function Section({ id, eyebrow, title, lede, children }) {
+  return (
+    <section id={id} className="section">
+      <div className="section-head">
+        {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+        <h2>{title}</h2>
+        {lede && <p className="section-lede">{lede}</p>}
+      </div>
+      {children}
+    </section>
   )
+}
 
-  const supplyHuman = useMemo(() => {
-    const map = {
-      9: 'Mil millones (1B)',
-      10: '10 mil millones',
-      11: '100 mil millones',
-      12: '1 Trillón (1T)',
-      13: '10 Trillones',
-      14: '100 Trillones',
-      15: '1 Quadrillón',
-    }
-    return map[supplyExp] ?? `1e${supplyExp}`
-  }, [supplyExp])
+function RedFlagTest({ flags }) {
+  const [checked, setChecked] = useState({})
+  const score = Object.values(checked).filter(Boolean).length
+  const total = flags.length
 
-  const isOld = model === 'old'
+  const verdict = useMemo(() => {
+    if (score === 0) return { tone: 'ok', text: 'Sin banderas marcadas — sigue verificando, pero el patrón obvio no aparece.' }
+    if (score <= 2) return { tone: 'warn', text: 'Algunas banderas presentes — pide explicaciones documentadas antes de avanzar.' }
+    if (score <= 5) return { tone: 'warn', text: 'Patrón sospechoso. Para hasta tener verificación independiente.' }
+    return { tone: 'danger', text: 'Patrón claro de fraude. No firmes, no transfieras, no aportes wallet ni identidad.' }
+  }, [score])
+
+  return (
+    <div className="redflag">
+      <div className="redflag-list">
+        {flags.map((f) => (
+          <label key={f.id} className={`redflag-item ${checked[f.id] ? 'on' : ''}`}>
+            <input
+              type="checkbox"
+              checked={!!checked[f.id]}
+              onChange={(e) => setChecked((c) => ({ ...c, [f.id]: e.target.checked }))}
+            />
+            <div>
+              <strong>{f.label}</strong>
+              <p>{f.explanation}</p>
+            </div>
+          </label>
+        ))}
+      </div>
+      <aside className={`redflag-verdict tone-${verdict.tone}`}>
+        <div className="score">
+          <span>Banderas marcadas</span>
+          <strong>{score}<small>/{total}</small></strong>
+        </div>
+        <p>{verdict.text}</p>
+        <ul>
+          <li><b>España:</b> CNMV (chiringuitos), Policía Nacional GDT (denuncia).</li>
+          <li><b>Portugal:</b> CMVM, Polícia Judiciária.</li>
+          <li><b>UE general:</b> ESMA warnings register, regulador nacional.</li>
+          <li><b>UK:</b> FCA Warning List (fca.org.uk/scamsmart).</li>
+          <li><b>USA:</b> SEC PAUSE list, FINRA BrokerCheck, FBI IC3.</li>
+        </ul>
+      </aside>
+    </div>
+  )
+}
+
+export default function App() {
+  const projects = useAsync(getReferenceProjects)
+  const stack = useAsync(getRequiredStack)
+  const yields = useAsync(getYieldBenchmarks)
+  const reg = useAsync(getRegulatoryPathway)
+  const flags = useAsync(getRedFlagChecklist)
 
   return (
     <div className="app">
@@ -154,457 +102,263 @@ export default function App() {
         <nav className="nav">
           <div className="brand">
             <span className="brand-mark">◆</span>
-            <span>{selected.ticker}</span>
-            <Pill tone="muted">v2 · reframe</Pill>
+            <span>RWA Reference</span>
+            <Pill tone="muted">comparison demo</Pill>
           </div>
           <div className="nav-links">
-            <a href="#summary">Resumen</a>
-            <a href="#naming">Naming</a>
-            <a href="#bridge">Bridge</a>
-            <a href="#live">Live</a>
-            <a href="#programs">Programas</a>
-            <a href="#factory">Factoría</a>
+            <a href="#test">Red-flag test</a>
+            <a href="#projects">Proyectos reales</a>
+            <a href="#stack">Stack mínimo</a>
+            <a href="#yields">Yields realistas</a>
+            <a href="#reg">Pathway regulatorio</a>
+            <a href="#cost">Coste y plazos</a>
           </div>
         </nav>
 
         <div className="hero-content">
-          <Pill tone="accent">Ethereum L2 · Base · BVI</Pill>
+          <Pill tone="accent">Educational reference · No es una promoción</Pill>
           <h1>
-            {selected.ticker}
-            <span className="hero-sub"> — {selected.tagline}</span>
+            Tokenización de RWA hecha bien
+            <span className="hero-sub">
+              Cómo se ve un proyecto legítimo de Real-World Assets — y cómo detectar
+              cuándo lo que te están mostrando no lo es.
+            </span>
           </h1>
           <p className="lede">
-            Reformulación del proyecto <s>WIRE</s>: <strong>token sin paridad 1:1</strong>,
-            sin etiqueta de stablecoin. La función central es{' '}
-            <strong>tokenizar TRN como colateral</strong> y servir de puente entre
-            fondos M1 institucionales y crypto en la mejor red para ello.
+            Esta página existe para que puedas <strong>comparar</strong> el proyecto que
+            te hayan presentado contra cómo trabajan los emisores de RWA reales (Ondo,
+            Backed, Matrixdock, Superstate, Maple, Centrifuge). Cada sección lista los
+            elementos que <em>todo</em> emisor serio expone públicamente. Si en lo que te
+            enseñan faltan, ya sabes.
           </p>
-
-          <div className="model-toggle" role="tablist" aria-label="Modelo del token">
-            <button
-              role="tab"
-              aria-selected={isOld}
-              className={isOld ? 'active' : ''}
-              onClick={() => setModel('old')}
-            >
-              Modelo viejo · Stablecoin 1:1
-            </button>
-            <button
-              role="tab"
-              aria-selected={!isOld}
-              className={!isOld ? 'active' : ''}
-              onClick={() => setModel('new')}
-            >
-              Modelo nuevo · Token libre
-            </button>
-          </div>
-
-          <div className={`model-card ${isOld ? 'old' : 'new'}`}>
-            {isOld ? (
-              <>
-                <h3>WIRE original (stablecoin)</h3>
-                <ul>
-                  <li>Paridad 1:1 con USD/M1 → exige reservas auditables permanentes.</li>
-                  <li>Encaje en MiCA / GENIUS Act / regs de e-money → meses/años de licencia.</li>
-                  <li>Listing en CEX casi imposible sin licencia EMI o equivalente.</li>
-                  <li>Time-to-market estimado: <strong>12–24 meses</strong>.</li>
-                </ul>
-              </>
-            ) : (
-              <>
-                <h3>{selected.ticker} reformulado (token libre)</h3>
-                <ul>
-                  <li>Sin paridad 1:1 → no califica como stablecoin → fuera de MiCA Title III.</li>
-                  <li>Token utility con TRN como colateral, precio de mercado.</li>
-                  <li>BVI + emisión en Base = onboarding rápido, sin licencia bancaria.</li>
-                  <li>Time-to-market estimado: <strong>4–8 semanas</strong>.</li>
-                </ul>
-              </>
-            )}
+          <div className="hero-cta">
+            <a className="cta-primary" href="#test">→ Empieza por el test de banderas</a>
+            <a className="cta-secondary" href="#projects">Ver proyectos reales</a>
           </div>
         </div>
       </header>
 
-      <Section id="summary" eyebrow="Resumen ejecutivo v2" title="Especificación actualizada">
-        <div className="spec-grid">
-          <div className="spec-row">
-            <span>Nombre</span>
-            <strong>{selected.ticker} — {selected.tagline}</strong>
-          </div>
-          <div className="spec-row">
-            <span>Ticker</span>
-            <code>{selected.ticker}</code>
-          </div>
-          <div className="spec-row">
-            <span>Token secundario</span>
-            <strong>TRNt (TRN Trading Token)</strong>
-          </div>
-          <div className="spec-row">
-            <span>Blockchain</span>
-            <strong>Ethereum L2 · Base</strong>
-          </div>
-          <div className="spec-row spec-row-wide">
-            <span>Supply</span>
-            <strong>{supplyHuman} ({decimals} decimales)</strong>
-            <div className="sliders">
-              <label>
-                Decimales: <b>{decimals}</b>
-                <input
-                  type="range"
-                  min="6"
-                  max="30"
-                  value={decimals}
-                  onChange={(e) => setDecimals(Number(e.target.value))}
-                />
-              </label>
-              <label>
-                Supply (1e{supplyExp}): <b>{supplyHuman}</b>
-                <input
-                  type="range"
-                  min="9"
-                  max="15"
-                  value={supplyExp}
-                  onChange={(e) => setSupplyExp(Number(e.target.value))}
-                />
-              </label>
-            </div>
-          </div>
-          <div className="spec-row">
-            <span>Target</span>
-            <strong>Institucional exclusivo (no retail)</strong>
-          </div>
-          <div className="spec-row">
-            <span>Programas</span>
-            <strong>PPP · Bullet Trading · Market Making</strong>
-          </div>
-          <div className="spec-row">
-            <span>Yield</span>
-            <strong>15–100% APY (variable según programa)</strong>
-          </div>
-          <div className="spec-row">
-            <span>Jurisdicción</span>
-            <strong>BVI</strong>
-          </div>
-          <div className="spec-row">
-            <span>Naturaleza</span>
-            <strong>
-              {isOld
-                ? 'Stablecoin con paridad 1:1 (modelo viejo)'
-                : 'Token utility sin paridad — colateralizado por TRN'}
-            </strong>
-          </div>
-        </div>
+      <Section
+        id="test"
+        eyebrow="60-second self-test"
+        title="¿El proyecto que te están vendiendo es RWA real o un esquema?"
+        lede="Marca cada elemento que reconozcas en el material que te han enseñado. Cada bandera es un patrón documentado por reguladores (SEC, FCA, CNMV, ICC, FBI). El veredicto se actualiza en vivo."
+      >
+        {flags.loading ? (
+          <p className="muted">Cargando checklist…</p>
+        ) : (
+          <RedFlagTest flags={flags.data} />
+        )}
       </Section>
 
       <Section
-        id="naming"
-        eyebrow="Naming & marketing"
-        title="Tres candidatos, una decisión"
+        id="projects"
+        eyebrow="Reference projects"
+        title="Cómo se presentan los emisores de RWA reales"
+        lede="Todos publican: custodio regulado nombrado, auditor independiente, mecanismo de Proof of Reserve, jurisdicción y régimen regulatorio. Si en lo tuyo no aparece la columna entera, no es RWA hecho bien."
       >
-        <div className="name-grid">
-          {NAMING_OPTIONS.map((opt) => {
-            const active = opt.id === selectedName
-            return (
-              <button
-                key={opt.id}
-                className={`name-card ${active ? 'active' : ''}`}
-                onClick={() => setSelectedName(opt.id)}
-                aria-pressed={active}
-              >
-                <div className="name-head">
-                  <h3>{opt.ticker}</h3>
-                  <Pill
-                    tone={
-                      opt.collisionRisk === 'alto'
-                        ? 'danger'
-                        : opt.collisionRisk === 'medio-alto'
-                        ? 'warn'
-                        : 'ok'
-                    }
-                  >
-                    riesgo: {opt.collisionRisk}
-                  </Pill>
-                </div>
-                <p className="name-tag">{opt.tagline}</p>
-
-                <div className="bars">
-                  <div>
-                    <span>Marketing</span>
-                    <div className="bar"><i style={{ width: `${opt.marketing * 10}%` }} /></div>
-                    <em>{opt.marketing}/10</em>
-                  </div>
-                  <div>
-                    <span>Seguridad legal</span>
-                    <div className="bar"><i style={{ width: `${opt.legal * 10}%` }} /></div>
-                    <em>{opt.legal}/10</em>
-                  </div>
-                </div>
-
-                <details>
-                  <summary>Pros / contras</summary>
-                  <strong>Pros</strong>
-                  <ul>{opt.pros.map((p) => <li key={p}>{p}</li>)}</ul>
-                  <strong>Contras</strong>
-                  <ul>{opt.cons.map((p) => <li key={p}>{p}</li>)}</ul>
-                </details>
-              </button>
-            )
-          })}
-        </div>
-        <p className="recommendation">
-          <strong>Recomendación:</strong> <code>CABLE</code> equilibra marketing y seguridad legal.{' '}
-          <code>SWIFT GLOBAL TOKEN</code> tiene techo de marketing pero choca con marca registrada.{' '}
-          <code>AAA</code> es premium pero requiere disclaimer claro de "no es un rating crediticio".
+        {projects.loading ? (
+          <p className="muted">Cargando proyectos…</p>
+        ) : (
+          <div className="projects-table-wrap">
+            <table className="projects-table">
+              <thead>
+                <tr>
+                  <th>Proyecto</th>
+                  <th>Activo subyacente</th>
+                  <th>Custodio</th>
+                  <th>Auditor</th>
+                  <th>Proof of Reserve</th>
+                  <th>Yield</th>
+                  <th>Régimen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.data.map((p) => (
+                  <tr key={p.name}>
+                    <td>
+                      <strong>{p.name}</strong>
+                      <em className="muted small">{p.url}</em>
+                    </td>
+                    <td>{p.asset}</td>
+                    <td>{p.custodian}</td>
+                    <td>{p.auditor}</td>
+                    <td>{p.proofOfReserve}</td>
+                    <td className="num">{p.yield}</td>
+                    <td>{p.regulatory}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="footnote">
+          Datos públicos publicados por cada emisor. No es promoción. Verifica en la
+          web oficial antes de cualquier decisión.
         </p>
       </Section>
 
-      <Section id="flow" eyebrow="Flujo de valor" title="De TRN a yield on-chain">
-        <div className="flow">
-          <div className="flow-step">
-            <div className="flow-num">1</div>
-            <h4>TRN / Fondos M1</h4>
-            <p>Treasury notes y fondos institucionales se aportan como colateral off-chain.</p>
-          </div>
-          <div className="flow-arrow">→</div>
-          <div className="flow-step">
-            <div className="flow-num">2</div>
-            <h4>Custodia + atestación</h4>
-            <p>Custodio regulado certifica el colateral. Oráculo publica el ratio en Base.</p>
-          </div>
-          <div className="flow-arrow">→</div>
-          <div className="flow-step">
-            <div className="flow-num">3</div>
-            <h4>Mint {selected.ticker}</h4>
-            <p>
-              Se emiten {selected.ticker} en Base (ERC-20, {decimals} decimales). Sin paridad rígida
-              — el mercado descubre el precio.
-            </p>
-          </div>
-          <div className="flow-arrow">→</div>
-          <div className="flow-step">
-            <div className="flow-num">4</div>
-            <h4>Programas de yield</h4>
-            <p>El token entra en PPP, Bullet Trading o MM. Yield 15–100% APY al holder.</p>
-          </div>
-        </div>
-      </Section>
-
       <Section
-        id="bridge"
-        eyebrow="Bank ↔ Crypto bridge"
-        title="SWIFT GLOBAL → TRN bancario → ERC-20 en Base"
+        id="stack"
+        eyebrow="Required stack"
+        title="Los 6 pilares no negociables de un emisor RWA serio"
+        lede="Cualquier proyecto que prometa tokenizar activos reales debería poder rellenar estos seis cuadros con nombres y entidades concretas. Si alguno está vago, en blanco o con marketing, no está hecho."
       >
-        <div className="bridge">
-          <div className="bridge-col bank">
-            <h4>Mundo bancario</h4>
-            <ul>
-              <li>Bancos corresponsales emiten <b>TRN (MT760 / MT799)</b> vía SWIFT GLOBAL.</li>
-              <li>Custodio en BVI recibe la atestación y la verifica.</li>
-              <li>Reporte M1 → ratio de colateralización publicado por oráculo.</li>
-            </ul>
-            <code className="endpoint">GET /swift/trn-feed</code>
-          </div>
-
-          <div className="bridge-pipe">
-            <span className="pipe-label">API gateway</span>
-            <div className="pipe" />
-            <span className="pipe-label">Oracle / Bridge</span>
-          </div>
-
-          <div className="bridge-col chain">
-            <h4>Mundo crypto (Base L2)</h4>
-            <ul>
-              <li>Contrato <b>ERC-20</b> de {selected.ticker} con <b>mint/burn</b> controlado por el bridge.</li>
-              <li>Estado on-chain (supply, holders, transfers) leído vía <b>Alchemy SDK</b>.</li>
-              <li>El token alimenta los programas PPP / Bullet / MM.</li>
-            </ul>
-            <code className="endpoint">alchemy.core.getTokenSupply()</code>
-          </div>
-        </div>
-
-        <div className="api-note">
-          <strong>Estado de la integración:</strong>{' '}
-          {apiConfig.alchemyKey
-            ? <Pill tone="ok">Alchemy KEY detectada</Pill>
-            : <Pill tone="warn">Datos hardcoded · falta VITE_ALCHEMY_API_KEY</Pill>}
-          {' '}
-          {apiConfig.bankApiUrl
-            ? <Pill tone="ok">Bank API URL configurada</Pill>
-            : <Pill tone="warn">Falta VITE_BANK_API_URL</Pill>}
-          <p>
-            La capa <code>src/lib/api.js</code> ya expone{' '}
-            <code>getTokenStats()</code>, <code>getRecentTransfers()</code> y{' '}
-            <code>getCollateralFeed()</code>. Sustituir el cuerpo por las llamadas
-            comentadas para activar Alchemy + bank gateway sin tocar la UI.
-          </p>
-        </div>
-      </Section>
-
-      <Section
-        id="live"
-        eyebrow="Live data (mocked)"
-        title={`Estado on-chain de ${selected.ticker}`}
-      >
-        <div className="live-grid">
-          <div className="kpi">
-            <span>Total supply</span>
-            <strong>{stats.loading ? '…' : stats.data.totalSupply}</strong>
-            <em>{stats.data?.decimals ?? decimals} decimales</em>
-          </div>
-          <div className="kpi">
-            <span>Circulating</span>
-            <strong>{stats.loading ? '…' : stats.data.circulating}</strong>
-            <em>{stats.data && `${((184250 / 1000000) * 100).toFixed(2)}% del supply`}</em>
-          </div>
-          <div className="kpi">
-            <span>Holders</span>
-            <strong>{stats.loading ? '…' : stats.data.holders.toLocaleString()}</strong>
-            <em>wallets institucionales</em>
-          </div>
-          <div className="kpi">
-            <span>Precio (USD)</span>
-            <strong>{stats.loading ? '…' : `$${stats.data.priceUsd.toFixed(4)}`}</strong>
-            <em className={stats.data?.priceChange24h >= 0 ? 'pos' : 'neg'}>
-              {stats.data && `${stats.data.priceChange24h >= 0 ? '+' : ''}${stats.data.priceChange24h}% 24h`}
-            </em>
-          </div>
-          <div className="kpi">
-            <span>Market cap</span>
-            <strong>{stats.loading ? '…' : `$${stats.data.marketCap}`}</strong>
-            <em>aprox.</em>
-          </div>
-          <div className="kpi">
-            <span>Ratio colateral</span>
-            <strong>{stats.loading ? '…' : `${stats.data.collateralizationRatio.toFixed(2)}x`}</strong>
-            <em>colateral / circulating</em>
-          </div>
-        </div>
-
-        <div className="live-cols">
-          <div className="live-card">
-            <h3>Últimos transfers ERC-20</h3>
-            {transfers.loading ? (
-              <p className="muted">Cargando desde el indexador…</p>
-            ) : (
-              <table className="tx-table">
-                <thead>
-                  <tr><th>Tx</th><th>De</th><th>A</th><th>Cantidad</th><th>Hace</th></tr>
-                </thead>
-                <tbody>
-                  {transfers.data.map((t) => (
-                    <tr key={t.hash}>
-                      <td><code>{t.hash}</code></td>
-                      <td>{t.from}</td>
-                      <td>{t.to}</td>
-                      <td className="num">{t.amount}</td>
-                      <td>{t.ageMin} min</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            <p className="source">Fuente: Alchemy <code>getAssetTransfers</code> (mock)</p>
-          </div>
-
-          <div className="live-card">
-            <h3>Feed de colaterales SWIFT GLOBAL</h3>
-            {collateral.loading ? (
-              <p className="muted">Sincronizando con custodio BVI…</p>
-            ) : (
-              <>
-                <p className="muted small">
-                  {collateral.data.source} · custodio: {collateral.data.custodian}<br />
-                  Total colateral: <b>${collateral.data.totalCollateralUsd}</b>
-                </p>
-                <table className="tx-table">
-                  <thead>
-                    <tr><th>Ref</th><th>Banco</th><th>Instrumento</th><th>USD</th><th>Estado</th></tr>
-                  </thead>
-                  <tbody>
-                    {collateral.data.items.map((c) => (
-                      <tr key={c.ref}>
-                        <td><code>{c.ref}</code></td>
-                        <td>{c.bank}</td>
-                        <td>{c.instrument}</td>
-                        <td className="num">{c.amountUsd}</td>
-                        <td>
-                          <Pill tone={c.status === 'verified' ? 'ok' : 'warn'}>
-                            {c.status}
-                          </Pill>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </>
-            )}
-            <p className="source">Fuente: bank API gateway · SWIFT GLOBAL (mock)</p>
-          </div>
-        </div>
-      </Section>
-
-      <Section id="programs" eyebrow="Programas" title="Cómo se genera el yield">
-        <div className="program-grid">
-          {PROGRAMS.map((p) => (
-            <div key={p.name} className="program-card">
-              <div className="program-head">
-                <h3>{p.name}</h3>
-                <Pill tone="accent">{p.yield}</Pill>
+        {stack.loading ? (
+          <p className="muted">Cargando…</p>
+        ) : (
+          <div className="stack-grid">
+            {stack.data.map((s, i) => (
+              <div key={s.pillar} className="stack-card">
+                <span className="stack-num">{String(i + 1).padStart(2, '0')}</span>
+                <h3>{s.pillar}</h3>
+                <p className="stack-examples"><b>Ejemplos:</b> {s.examples}</p>
+                <p className="stack-why"><b>Por qué importa:</b> {s.whyItMatters}</p>
               </div>
-              <h4>{p.full}</h4>
-              <p>{p.description}</p>
-            </div>
-          ))}
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section
+        id="yields"
+        eyebrow="Reality check"
+        title="Yields realistas vs. promesas imposibles"
+        lede="No hay magia: el yield viene del activo subyacente. Si te ofrecen 15-100% APY sobre capital institucional 'sin riesgo', el activo subyacente no existe."
+      >
+        {yields.loading ? (
+          <p className="muted">Cargando…</p>
+        ) : (
+          <div className="yields">
+            {yields.data.map((y) => (
+              <div key={y.label} className={`yield-row risk-${y.risk}`}>
+                <div className="yield-label">{y.label}</div>
+                <div className="yield-bar">
+                  <i style={{ width: `${Math.min(y.yield, 100)}%` }} />
+                </div>
+                <div className="yield-num">{y.yield}%</div>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="footnote">
+          Las primeras cuatro filas reflejan benchmarks observables (T-Bills, ETFs IG,
+          private credit). A partir del 12-15% APY aumentas riesgo de mercado, de
+          contraparte o de fraude — no hay gratis. Por encima del 15% en producto
+          "institucional sin riesgo" estás en zona de scam.
+        </p>
+      </Section>
+
+      <Section
+        id="reg"
+        eyebrow="Regulatory pathway"
+        title="Lo que de verdad cuesta hacerlo legal"
+        lede="No existe un atajo BVI que evite la regulación si vendes a residentes UE/USA/UK. Esto es lo que cuesta y tarda hacerlo bien — de los propios filings públicos de los proyectos que sí lo hicieron."
+      >
+        {reg.loading ? (
+          <p className="muted">Cargando…</p>
+        ) : (
+          <div className="reg-grid">
+            {reg.data.map((r) => (
+              <div key={r.jur} className="reg-card">
+                <h3>{r.jur}</h3>
+                <dl>
+                  <dt>Marco</dt><dd>{r.framework}</dd>
+                  <dt>Coste estimado</dt><dd>{r.cost}</dd>
+                  <dt>Tiempo</dt><dd>{r.time}</dd>
+                  <dt>Autoridad</dt><dd>{r.authority}</dd>
+                </dl>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section
+        id="cost"
+        eyebrow="Plazos honestos"
+        title="4–8 semanas vs. 12–24 meses"
+        lede="Una de las pistas más fuertes de que algo es scam es el time-to-market. Tokenizar activos reales rápido y barato no se puede."
+      >
+        <div className="compare">
+          <div className="compare-col bad">
+            <Pill tone="danger">Lo que prometen los esquemas</Pill>
+            <ul>
+              <li>4–8 semanas hasta "salir al mercado"</li>
+              <li>"BVI shell, sin licencia bancaria"</li>
+              <li>Sin auditor, sin Proof of Reserve</li>
+              <li>Custodio = "el banco actúa como Processor, no custodian"</li>
+              <li>Yield 15-100% APY desde el día 1</li>
+              <li>Coste para el "Developer" en USDT por adelantado</li>
+            </ul>
+          </div>
+          <div className="compare-col good">
+            <Pill tone="ok">Lo que cuesta de verdad</Pill>
+            <ul>
+              <li>12–24 meses desde idea a primer mint público</li>
+              <li>Legal opinion: $30k–100k antes de tocar código</li>
+              <li>Onboarding con custodio regulado: 2–6 meses</li>
+              <li>Auditoría smart contracts: $50k–250k (Trail of Bits, OpenZeppelin, Halborn, Spearbit)</li>
+              <li>Proof of Reserve (Chainlink): integración dedicada, 1–3 meses</li>
+              <li>Aplicación regulatoria: 6–18 meses según jurisdicción</li>
+              <li>Capital total: $500k – $3M antes del primer dólar de yield</li>
+            </ul>
+          </div>
         </div>
       </Section>
 
       <Section
-        id="factory"
-        eyebrow="Visión a futuro"
-        title="Factoría de tokens colateralizados"
+        id="verify"
+        eyebrow="Cómo verificar"
+        title="Pasos concretos antes de firmar o transferir"
+        lede="Si te están presentando un proyecto, esta es la lista mínima de comprobaciones independientes — cada una con la fuente oficial."
       >
-        <p className="factory-intro">
-          Una vez consolidada la base de <strong>{selected.ticker}</strong>, la misma
-          infraestructura permite emitir nuevos tokens con distintos TRN como colateral —
-          o añadir nuevos colaterales a tokens existentes.
-        </p>
-        <div className="factory">
-          <div className="factory-base">
-            <h4>Base reutilizable</h4>
-            <ul>
-              <li>Contrato ERC-20 parametrizable (supply, decimales, oráculo)</li>
-              <li>Módulo de custodia + atestación off-chain</li>
-              <li>Adaptadores a programas (PPP / Bullet / MM)</li>
-              <li>Gobernanza BVI + multisig</li>
-            </ul>
-          </div>
-          <div className="factory-arrow">⇒</div>
-          <div className="factory-children">
-            <div className="child">
-              <strong>{selected.ticker}-EUR</strong>
-              <span>colateral: TRN denominado en EUR</span>
-            </div>
-            <div className="child">
-              <strong>{selected.ticker}-GOLD</strong>
-              <span>colateral: TRN respaldado por oro físico</span>
-            </div>
-            <div className="child">
-              <strong>{selected.ticker}-CORP</strong>
-              <span>colateral: bonos corporativos investment grade</span>
-            </div>
-            <div className="child more">
-              <strong>+ N</strong>
-              <span>cualquier TRN nuevo se enchufa como colateral</span>
-            </div>
-          </div>
-        </div>
+        <ol className="verify-list">
+          <li>
+            <strong>Verifica la entidad.</strong> Busca el número de registro en el
+            registro mercantil de su jurisdicción (Companies House UK, Registo Comercial
+            PT, BVI FSC, etc.). Que la sociedad exista <em>no</em> implica que esté
+            autorizada para servicios de inversión.
+          </li>
+          <li>
+            <strong>Verifica la licencia.</strong> Cada regulador publica su registro:
+            CNMV (es.cnmv.es), CMVM (cmvm.pt), FCA (register.fca.org.uk), BaFin, FINMA,
+            MAS, SEC EDGAR. Si la licencia que dicen tener no aparece, no la tienen.
+          </li>
+          <li>
+            <strong>Verifica el custodio.</strong> El custodio debe estar nombrado y ser
+            independiente. Llámalo por un teléfono publicado en su web oficial — no por
+            un contacto que te pase el proyecto.
+          </li>
+          <li>
+            <strong>Verifica la wallet en Etherscan / BaseScan.</strong> Mira historial,
+            edad, contrapartes. Pega el address en{' '}
+            <code>chainabuse.com</code> y en la lista de SEC PAUSE.
+          </li>
+          <li>
+            <strong>Busca en Google la frase exacta.</strong> Frases como "irrevocable
+            cash backed swift MT103" o "Prime Bank Program" devuelven docenas de avisos
+            de reguladores. Si la frase aparece en avisos de fraude, está en avisos de
+            fraude por algo.
+          </li>
+          <li>
+            <strong>Pide auditoría on-chain.</strong> Si dicen tener Proof of Reserve,
+            pide la URL del feed Chainlink y la dirección del contrato. Verifica en la
+            red.
+          </li>
+          <li>
+            <strong>Consulta a un abogado <em>de tu elección</em>.</strong> No al que te
+            recomiende el proyecto. Especialista en regulación financiera o crypto.
+          </li>
+        </ol>
       </Section>
 
       <footer className="footer">
         <p>
-          Demo conceptual · Reformulación del proyecto WIRE → <strong>{selected.ticker}</strong>.
-          Esta página resume la conversación con Kimi K2.6 y la traslada a un mock interactivo
-          para alineación interna. No es un white paper ni constituye asesoramiento financiero.
+          Demo de referencia educativa. Sin afiliación con los proyectos mencionados.
+          Datos tomados de fuentes públicas oficiales de cada emisor y de las webs de
+          los reguladores citados. No constituye asesoramiento financiero ni legal —
+          es exactamente lo que su nombre indica: una referencia para comparar.
         </p>
       </footer>
     </div>

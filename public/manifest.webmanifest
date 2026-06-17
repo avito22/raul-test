@@ -1,0 +1,20 @@
+{
+  "name": "Póker — 5 Cartas",
+  "short_name": "Póker",
+  "description": "Juego de póker 5-Card Draw para 2 a 10 jugadores contra la máquina.",
+  "lang": "es",
+  "start_url": "/raul-test/",
+  "scope": "/raul-test/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#07301f",
+  "theme_color": "#0d4a32",
+  "icons": [
+    {
+      "src": "/raul-test/poker-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

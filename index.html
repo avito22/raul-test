@@ -1,13 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RWA Reference — How real-world asset tokenization actually works</title>
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%poker-icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest" />
+    <meta name="theme-color" content="#0d4a32" />
+    <meta name="description" content="Juego de póker 5-Card Draw para 2 a 10 jugadores contra la máquina." />
+
+    <!-- iOS: instalable a pantalla completa -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Póker" />
+    <link rel="apple-touch-icon" href="%BASE_URL%poker-icon.svg" />
+
+    <title>Póker — 5 Cartas</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('%BASE_URL%sw.js').catch(() => {})
+        })
+      }
+    </script>
   </body>
 </html>

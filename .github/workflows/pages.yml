@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/react-demo-preview-RdgxW
+      - claude/amazing-darwin-81pxse
       - main
   workflow_dispatch:
 

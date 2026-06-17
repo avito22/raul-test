@@ -113,6 +113,36 @@ export function compareHands(a, b) {
   return 0
 }
 
+// Genera todas las combinaciones de tamaño k de un array
+function combinations(arr, k) {
+  const result = []
+  const combo = (start, picked) => {
+    if (picked.length === k) {
+      result.push(picked.slice())
+      return
+    }
+    for (let i = start; i < arr.length; i++) {
+      picked.push(arr[i])
+      combo(i + 1, picked)
+      picked.pop()
+    }
+  }
+  combo(0, [])
+  return result
+}
+
+// Mejor mano de 5 cartas a partir de un conjunto de 5 a 7 cartas
+// (estilo Texas Hold'em: 2 cartas propias + cartas comunitarias)
+export function bestHand(cards) {
+  if (cards.length < 5) return evaluateHand(cards)
+  let best = null
+  for (const combo of combinations(cards, 5)) {
+    const ev = evaluateHand(combo)
+    if (!best || compareHands(ev, best) > 0) best = ev
+  }
+  return best
+}
+
 // IA sencilla: decide qué cartas descartar para mejorar la mano
 export function aiDiscard(cards) {
   const evald = evaluateHand(cards)

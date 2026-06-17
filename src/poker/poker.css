@@ -123,6 +123,24 @@
 
 .opponent.folded { opacity: 0.4; }
 
+/* ---- Cartas comunitarias ---- */
+.board {
+  width: 100%;
+  max-width: 760px;
+  text-align: center;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.board-title {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.7;
+}
+
 .opponent.winner {
   border-color: #ffd86b;
   box-shadow: 0 0 0 2px #ffd86b, 0 0 22px rgba(255, 216, 107, 0.5);
@@ -264,6 +282,73 @@
 
 /* ---- Controls ---- */
 .controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ---- Panel de apuesta con fichas ---- */
+.bet-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.chips-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.chip {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 4px dashed rgba(255, 255, 255, 0.85);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.chip:hover:not(:disabled) { transform: translateY(-4px); }
+.chip:disabled { opacity: 0.4; cursor: not-allowed; }
+.chip.used { border-style: solid; }
+
+.chip-5   { background: #c0392b; }
+.chip-10  { background: #2980b9; }
+.chip-20  { background: #27ae60; }
+.chip-50  { background: #8e44ad; }
+.chip-100 { background: #2c3e50; }
+
+.chip-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ffd86b;
+  color: #0d4a32;
+  font-size: 0.72rem;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 2px 7px;
+  border: 2px solid #07301f;
+}
+
+.bet-summary {
+  font-size: 1.05rem;
+  opacity: 0.9;
+}
+.bet-summary strong { color: #ffd86b; font-size: 1.25rem; }
+
+.bet-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;

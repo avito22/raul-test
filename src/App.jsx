@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import Game from './Game.jsx'
 import {
   getReferenceProjects,
   getRedFlagChecklist,
@@ -94,9 +95,11 @@ export default function App() {
   const yields = useAsync(getYieldBenchmarks)
   const reg = useAsync(getRegulatoryPathway)
   const flags = useAsync(getRedFlagChecklist)
+  const [showGame, setShowGame] = useState(false)
 
   return (
     <div className="app">
+      {showGame && <Game onExit={() => setShowGame(false)} />}
       <header className="hero">
         <div className="hero-bg" aria-hidden />
         <nav className="nav">
@@ -112,6 +115,7 @@ export default function App() {
             <a href="#yields">Yields realistas</a>
             <a href="#reg">Pathway regulatorio</a>
             <a href="#cost">Coste y plazos</a>
+            <button className="game-launch" onClick={() => setShowGame(true)}>🔫 Jugar</button>
           </div>
         </nav>
 

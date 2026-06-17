@@ -1,5 +1,6 @@
-// Service worker básico: cachea la app para que funcione sin conexión.
-const CACHE = 'poker-v1'
+// Service worker: "red primero" para que siempre cargue la última versión
+// cuando hay conexión, y use la caché solo como respaldo sin internet.
+const CACHE = 'poker-v3'
 const BASE = '/raul-test/'
 const ASSETS = [BASE, BASE + 'index.html', BASE + 'manifest.webmanifest', BASE + 'poker-icon.svg']
 
@@ -19,19 +20,18 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
+  if (new URL(event.request.url).origin !== self.location.origin) return
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached
-      return fetch(event.request)
-        .then((res) => {
-          // Guarda en caché las respuestas válidas del mismo origen
-          if (res.ok && new URL(event.request.url).origin === self.location.origin) {
-            const copy = res.clone()
-            caches.open(CACHE).then((cache) => cache.put(event.request, copy))
-          }
-          return res
-        })
-        .catch(() => caches.match(BASE + 'index.html'))
-    }),
+    fetch(event.request)
+      .then((res) => {
+        if (res && res.ok) {
+          const copy = res.clone()
+          caches.open(CACHE).then((cache) => cache.put(event.request, copy))
+        }
+        return res
+      })
+      .catch(() =>
+        caches.match(event.request).then((cached) => cached || caches.match(BASE + 'index.html')),
+      ),
   )
 })

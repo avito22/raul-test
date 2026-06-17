@@ -5,7 +5,6 @@ import { hostPeer, joinPeer, randomCode } from './net'
 import { sfx } from './sfx'
 
 const STARTING_CHIPS = 500
-const MAX_CHIPS = 1000
 const ANTE = 10
 const CHIP_VALUES = [5, 10, 20, 50, 100]
 const MAX_PER_CHIP = 2
@@ -167,7 +166,7 @@ export default function OnlinePoker({ onExit }) {
     const share = Math.floor(g.pot / Math.max(1, winnersList.length))
     const winnerIds = new Set(winnersList.map((p) => p.pid))
     g.players = g.players.map((p) =>
-      winnerIds.has(p.pid) ? { ...p, chips: Math.min(MAX_CHIPS, p.chips + share) } : p,
+      winnerIds.has(p.pid) ? { ...p, chips: p.chips + share } : p,
     )
     g.boardShown = shown
     g.reveal = true

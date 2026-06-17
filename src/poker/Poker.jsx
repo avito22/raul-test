@@ -11,7 +11,6 @@ import OnlinePoker from './OnlinePoker'
 import { sfx, setSoundEnabled } from './sfx'
 
 const STARTING_CHIPS = 500
-const MAX_CHIPS = 1000          // tope máximo de fichas que puede acumular un jugador
 const ANTE = 10
 const MIN_PLAYERS = 2
 const MAX_PLAYERS = 10
@@ -278,7 +277,7 @@ export default function Poker() {
     const share = Math.floor(finalPot / Math.max(1, winnersList.length))
     const winnerIds = new Set(winnersList.map((p) => p.id))
     const settled = evaluated.map((p) =>
-      winnerIds.has(p.id) ? { ...p, chips: Math.min(MAX_CHIPS, p.chips + share) } : p,
+      winnerIds.has(p.id) ? { ...p, chips: p.chips + share } : p,
     )
 
     setPlayers(settled)
@@ -571,7 +570,7 @@ export default function Poker() {
         <p>
           Texas Hold'em: 2 cartas propias + comunitarias. Flop de 3 cartas; en caso
           de empate se destapan turn y river (hasta 5) y se revelan las cartas.
-          Fichas de 5/10/20/50/100 (máx. 2 de cada una por apuesta), tope de {MAX_CHIPS}.
+          Fichas de 5/10/20/50/100 (máx. 2 de cada una por apuesta), sin tope de fichas.
           {mode === 'friends' ? ' Modo pase y juega: cada uno apuesta en su turno y pasa el dispositivo.' : ''}
         </p>
       </footer>

@@ -115,7 +115,7 @@ export default function App() {
             <a href="#yields">Yields realistas</a>
             <a href="#reg">Pathway regulatorio</a>
             <a href="#cost">Coste y plazos</a>
-            <button className="game-launch" onClick={() => setShowGame(true)}>🔫 Jugar</button>
+            <button className="game-launch" onClick={() => setShowGame(true)}>🔫 Pistoleitor</button>
           </div>
         </nav>
 

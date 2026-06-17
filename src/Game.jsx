@@ -245,7 +245,7 @@ export default function Game({ onExit }) {
 
           {status === 'idle' && (
             <div className="game-panel">
-              <h2>🔫 Tiro al blanco</h2>
+              <h2>🔫 Pistoleitor</h2>
               <p>Apunta con el ratón y haz clic para disparar. Tienes {MAX_AMMO} balas;
                 se recargan solas cuando se acaban. Los blancos rojos pequeños valen más.</p>
               <p className="game-hint">Dispone de {GAME_DURATION} segundos. ¡Consigue la máxima puntuación!</p>
